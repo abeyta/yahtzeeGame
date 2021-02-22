@@ -6,6 +6,7 @@
  */
 
 import java.util.*;
+import java.io.*;
 
 /** 
 Completes a full game of Yahtzee by calculating rolls, keeping score, and taking input from the user.
@@ -17,6 +18,8 @@ class Yahtzee
 {
     static int numberOfSides = 6;
     static int numberOfDice = 5;
+    static int numberOfRolls = 3;
+    static Scanner consoleInput = new Scanner(System.in); //creates a new scanner to allow input from console
 
     /** 
     Main function of the program that calls play to execute 
@@ -32,6 +35,7 @@ class Yahtzee
 
         //executes the main program loop
         play(playAgain, hand);
+        consoleInput.close();
     }
 
     /** 
@@ -44,7 +48,7 @@ class Yahtzee
         for (int dieValue = 1; dieValue <= numberOfSides; dieValue++)
         {
             int currentCount = 0;
-            for (int diePosition = 0; diePosition < 5; diePosition++)
+            for (int diePosition = 0; diePosition < numberOfSides - 1; diePosition++)
             {
                 if (hand[diePosition] == dieValue)
                     currentCount++;
@@ -228,18 +232,25 @@ class Yahtzee
     */
     static void play(char playAgain, int[] hand)
     {
-        Scanner consoleInput = new Scanner(System.in); //creates a new scanner to allow input from console
 
         while (playAgain == 'y')
         {
-            String keep = "nnnnn"; //setup to roll all dice in the first roll
-            int turn = 1;
-            while (turn < 4 && keep != "yyyyy")
+            setUpDiceRolls(); //asks if the user wants different settings after each game
+            char[] keep = new char[numberOfDice];
+            int turn = 0;
+
+            //allocates corect amount of space within keep to acoomodate for various number of die
+            for (int i = 0; i < numberOfDice; i++)
+            {
+                keep[i] = 'n';
+            }
+
+            while (turn < numberOfRolls && allEqual(keep) == false)
             {
                 //roll dice not kept
                 for (int dieNumber = 0; dieNumber < numberOfDice; dieNumber++)
                 {
-                    if (keep.charAt(dieNumber) != 'y')
+                    if (keep[dieNumber] != 'y')
                         hand[dieNumber] = rollDie();
                 }
                 //output roll
@@ -253,7 +264,7 @@ class Yahtzee
                 if (turn < 3)
                 {  
                     System.out.print("enter dice to keep (y or n) ");
-                    keep = consoleInput.nextLine();
+                    keep = consoleInput.nextChar();
                 }
                 turn++;
             }
@@ -279,6 +290,88 @@ class Yahtzee
             System.out.print("\nEnter 'y' to play again: ");
             playAgain = consoleInput.nextLine().charAt(0);
         } 
-        consoleInput.close();
+        
+    }
+
+    /** 
+    
+    * 
+    *
+    *
+    */
+    static void readFile()
+    {  
+        try
+        {
+            File inFile = new File("yahtzeeConfig.txt");
+            Scanner scanner = new Scanner(inFile);
+
+            while (scanner.hasNextLine())
+            {
+                numberOfSides = Integer.parseInt(scanner.nextLine());
+                numberOfDice = Integer.parseInt(scanner.nextLine());
+                numberOfRolls = Integer.parseInt(scanner.nextLine());
+            }
+        
+            scanner.close();
+        }
+        catch (FileNotFoundException e) 
+        {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }   
+    }
+
+    static void setUpDiceRolls()
+    {
+        readFile();
+
+        char changeDice = 'y';
+
+        System.out.print("You are playing with " + numberOfDice + numberOfSides + "-sided dice\n");
+        System.out.print("You get " + numberOfRolls + " per turn\n");
+        System.out.print("Enter 'y' if you would like to change the configuration: ");
+        changeDice = consoleInput.nextLine().charAt(0);
+
+        if (changeDice == 'y')
+        {
+            System.out.print("Enter the number of sides on each die: ");
+            numberOfSides = consoleInput.nextInt();
+            System.out.print("Enter the number of dice in play: ");
+            numberOfDice = consoleInput.nextInt();
+            System.out.print("Enter the number of rolls per hand: ");
+            numberOfRolls = consoleInput.nextInt();
+        }
+    }
+
+    static Boolean allEqual(char[] keep)
+    {
+        int count = 0;
+        for (int i = 0; i < numberOfDice; i++)
+        {
+            if (keep[i] == 'y')
+                count++;
+        }
+
+        if (count == numberOfDice) //comapres the number of yes' to the total number of dice
+            return true; //if all dice are yes then it returns all equal
+        else
+        {
+            return false;
+        }
+    }
+
+    static void writeFile()
+    {
+        try
+        {
+            FileWriter writer = new FileWriter("yahtzeeConfig.txt");
+            writer.write(numberOfSides + "\n" + numberOfDice + "\n" + numberOfRolls)
+        } 
+        catch (IOException e) 
+        {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 }
