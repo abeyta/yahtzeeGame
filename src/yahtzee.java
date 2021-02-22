@@ -1,7 +1,7 @@
 /** 
  *Name: Adiran Abeyta
  *Class: CPSC 224, Spring 2021
- *Assignment: Homework #1
+ *Assignment: Homework #2
  *Description: A program that plays and scores one hand of Yahtzee.
  */
 
@@ -16,9 +16,9 @@ Completes a full game of Yahtzee by calculating rolls, keeping score, and taking
 
 class Yahtzee
 {
-    static int numberOfSides = 6;
-    static int numberOfDice = 5;
-    static int numberOfRolls = 3;
+    static int numberOfSides;
+    static int numberOfDice;
+    static int numberOfRolls;
     static Scanner consoleInput = new Scanner(System.in); //creates a new scanner to allow input from console
 
     /** 
@@ -27,14 +27,20 @@ class Yahtzee
     */
     public static void main(String args[])
     {
-        int[] hand;
-        hand = new int[numberOfDice];
         char playAgain = 'y';
         Random rnd = new Random();
         rnd.setSeed(20);
 
+        //reads the file and sets the the appropriate settings from the previous game before other memory is allocated
+        readFile();
+        //asks if the user wants different settings after each game
+        setUpDiceRolls();
+
+        //allocates space for hand once the user has input the number of dice they want to use
+        int[] hand = new int[numberOfSides];
+        
         //executes the main program loop
-        play(playAgain, hand);
+        play(playAgain, hand, numberOfDice, numberOfRolls, numberOfSides);
         consoleInput.close();
     }
 
@@ -108,7 +114,7 @@ class Yahtzee
     static int rollDie()
     {
         Random rnd = new Random();
-        int roll = rnd.nextInt(6);
+        int roll = rnd.nextInt(numberOfSides);
 
         return roll;
     }
@@ -230,41 +236,42 @@ class Yahtzee
     *@param hand[] uses the numbers generated for each hand
     *@param playAgain user inputed char that determines if the program plays again
     */
-    static void play(char playAgain, int[] hand)
+    static void play(char playAgain, int[] hand, int numberOfDice, int numberOfRolls, int numberOfSides)
     {
 
         while (playAgain == 'y')
         {
-            setUpDiceRolls(); //asks if the user wants different settings after each game
-            char[] keep = new char[numberOfDice];
+            char[] temp = new char[numberOfSides];
+            char[] temp2 = new char[numberOfSides];
+            //allocates corect amount of space within keep to acoomodate for various number of die
+            for (int i = 0; i < numberOfSides; i++)
+            {
+                temp[i] = 'n';
+                temp2[i] = 'y';
+            }
+            String keep = String.copyValueOf(temp);
             int turn = 0;
 
-            //allocates corect amount of space within keep to acoomodate for various number of die
-            for (int i = 0; i < numberOfDice; i++)
-            {
-                keep[i] = 'n';
-            }
-
-            while (turn < numberOfRolls && allEqual(keep) == false)
+            while (turn < numberOfRolls && allEqual(temp2) == true)
             {
                 //roll dice not kept
-                for (int dieNumber = 0; dieNumber < numberOfDice; dieNumber++)
+                for (int dieNumber = 0; dieNumber < numberOfDice - 1; dieNumber++)
                 {
-                    if (keep[dieNumber] != 'y')
+                    if (keep.charAt(dieNumber) != 'y')
                         hand[dieNumber] = rollDie();
                 }
                 //output roll
                 System.out.print("Your roll was: ");
                 for (int dieNumber = 0; dieNumber < numberOfDice; dieNumber++)
                 {
-                    System.out.print(hand[dieNumber] );
+                    System.out.print(hand[dieNumber]);
                 }
                 System.out.print("\n");
                 //if not the last roll of the hand prompt the user for dice to keep
                 if (turn < 3)
                 {  
                     System.out.print("enter dice to keep (y or n) ");
-                    keep = consoleInput.nextChar();
+                    keep = consoleInput.nextLine();
                 }
                 turn++;
             }
@@ -294,11 +301,9 @@ class Yahtzee
     }
 
     /** 
-    
-    * 
-    *
-    *
-    */
+    This function reads the input file and sets the game rules
+     * 
+     */
     static void readFile()
     {  
         try
@@ -312,7 +317,6 @@ class Yahtzee
                 numberOfDice = Integer.parseInt(scanner.nextLine());
                 numberOfRolls = Integer.parseInt(scanner.nextLine());
             }
-        
             scanner.close();
         }
         catch (FileNotFoundException e) 
@@ -322,14 +326,17 @@ class Yahtzee
         }   
     }
 
+    /** 
+    This function allows the user tp use previous game settings or create their own
+     * 
+     */
     static void setUpDiceRolls()
     {
-        readFile();
 
-        char changeDice = 'y';
+        char changeDice = 'n';
 
-        System.out.print("You are playing with " + numberOfDice + numberOfSides + "-sided dice\n");
-        System.out.print("You get " + numberOfRolls + " per turn\n");
+        System.out.print("You are playing with " + numberOfDice + " " + numberOfSides + "-sided dice\n");
+        System.out.print("You get " + numberOfRolls + " rolls per turn\n");
         System.out.print("Enter 'y' if you would like to change the configuration: ");
         changeDice = consoleInput.nextLine().charAt(0);
 
@@ -344,6 +351,13 @@ class Yahtzee
         }
     }
 
+    
+    /** 
+     This function checks the char array to see if all of the values are the same
+     * 
+     * @param keep
+     * @return Boolean
+     */
     static Boolean allEqual(char[] keep)
     {
         int count = 0;
@@ -361,12 +375,17 @@ class Yahtzee
         }
     }
 
+    /** 
+     This function uses a scanner to save the game settings in the yahtzeeConfig.txt
+     * 
+     */
     static void writeFile()
     {
         try
         {
             FileWriter writer = new FileWriter("yahtzeeConfig.txt");
-            writer.write(numberOfSides + "\n" + numberOfDice + "\n" + numberOfRolls)
+            writer.write(numberOfSides + "\n" + numberOfDice + "\n" + numberOfRolls);
+            writer.close();
         } 
         catch (IOException e) 
         {
