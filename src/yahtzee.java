@@ -21,14 +21,19 @@ public class yahtzee
         Random rnd = new Random();
         rnd.setSeed(20);
         int[] setting = new int[3];
+        int totalScore = 0;
         //reads the file and sets the the appropriate settings from the previous game before other memory is allocated
         file.readFile(setting);
+        //to keep track of which rows have been already used
+        int[] usedRow = new int[setting[0] + 7];
+        for (int i = 0; i < usedRow.length; i++)
+            usedRow[i] = 0;
         //asks if the user wants different settings after each game
         dice.setUpDiceRolls(setting);
         //allocates space for hand once the user has input the number of dice they want to use
         int[] hand = new int[setting[1]];
         //executes the main program loop
-        play(playAgain, hand, setting[1], setting[2], setting[0]);
+        play(playAgain, hand, setting[1], setting[2], setting[0], usedRow, totalScore);
         consoleInput.close();
     }
 
@@ -53,9 +58,12 @@ public class yahtzee
      * @param numberOfDice tracks the number of dice from the user
      * @param numberOfRoles tracks the number of roles per hand from the user
      * @param numberOfSides tracks the number of sides on a dice from the user
+     * @param hand[] uses the numbers genereated from each hand
+     * @param totalScore tracks total score
      */
-    static void play(char playAgain, int[] hand, int numberOfDice, int numberOfRolls, int numberOfSides)
+    static void play(char playAgain, int[] hand, int numberOfDice, int numberOfRolls, int numberOfSides, int[] usedRow, int totalScore)
     {
+        int bonusYahtzee = 0;
         while (playAgain == 'y')
         {
             char[] temp = new char[numberOfDice];
@@ -83,11 +91,9 @@ public class yahtzee
                 String answer;
                 System.out.print("Enter 'S' if you would like to see your scorecard: ");
                 answer = consoleInput.nextLine();
-                if (answer.equals("S"))
-                {
-                    scorecard.upperScorecard(hand, numberOfSides);
-                    System.out.print("\n");
-                }
+                if (answer.equals("S") || answer.equals("s"))
+                    System.out.print("Total score: " + totalScore);
+                System.out.print("\n");
 
                 //output roll
                 System.out.print("Your roll was: ");
@@ -102,9 +108,14 @@ public class yahtzee
                 {
                     System.out.print("enter dice to keep (y or n): ");
                     keep = consoleInput.nextLine();
+                    if (keep.length() != numberOfDice)
+                    {
+                        System.out.print("enter the correct number of dice to keep (y or n): ");
+                        keep = consoleInput.nextLine();
+                    } 
                 }
 
-                scorecard.selectLine(numberOfRolls, hand);
+                scorecard.selectLine(numberOfRolls, hand, numberOfSides, usedRow, numberOfSides, totalScore);
                 turn++;
             }
 
@@ -119,115 +130,16 @@ public class yahtzee
             System.out.print("\n");
 
             //upper scorecard
-            scorecard.upperScorecard(hand, numberOfSides);
+            scorecard.upperScorecard(hand, numberOfSides, usedRow, numberOfRolls, numberOfSides);
             //lower scorecard
-            scorecard.lowerScorecard(hand, numberOfSides);
+            scorecard.lowerScorecard(hand, numberOfSides, usedRow, totalScore, bonusYahtzee);
             System.out.print("Score " + scorecard.totalAllDice(hand, numberOfRolls) + " on the ");
             System.out.print("Chance line \n");
             System.out.print("\nEnter 'y' to play again: ");
             String in = consoleInput.nextLine();
 
-            if(in.length()>0)
+            if(in.length() > 0)
                 playAgain = in.charAt(0);
-        }
-    }
-}
-
-class dice extends yahtzee
-{
-    /*
-     * Simulates the rolling of a single die
-     *
-     * @param number the number of sides on a dic
-     * @return roll returns the number from 1 die roll
-     */
-    static int rollDie(int number)
-    {
-        Random rnd = new Random();
-        int roll = rnd.nextInt(number) + 1;
-        return roll;
-    }
-
-    /**
-     * This function allows the user tp use previous game settings or create their
-     * own
-     *
-     * @param setting tracks the user inputted settings
-     */
-    static void setUpDiceRolls(int[] setting)
-    {
-        //initialize
-        char changeDice = 'n';
-        System.out.print("You are playing with " + setting[1] + " " + setting[0] + "-sided dice\n");
-        System.out.print("You get " + setting[2] + " rolls per turn\n");
-        System.out.print("Enter 'y' if you would like to change the configuration: ");
-        changeDice = consoleInput.nextLine().charAt(0);
-
-        if (changeDice == 'y')
-        {
-            int tmp;
-            System.out.print("Enter the number of sides on each die: ");
-            tmp = consoleInput.nextInt();
-            setting[0] = tmp;
-            System.out.print("Enter the number of dice in play: ");
-            tmp = consoleInput.nextInt();
-            setting[1] = tmp;
-            System.out.print("Enter the number of rolls per hand: ");
-            tmp = consoleInput.nextInt();
-            setting[2] = tmp;
-
-            //save settings for next game
-            file.writeFile(setting);
-        }
-    }
-}
-
-class file extends yahtzee
-{
-    /**
-     * This function reads the input file and sets the game rules
-     *
-     * @param setting tracks the user inputted settings
-     */
-    static void readFile(int[] setting)
-    {
-        try
-        {
-            File inFile = new File("yahtzeeConfig.txt");
-            Scanner scanner = new Scanner(inFile);
-            while (scanner.hasNextLine())
-            {
-                setting[0] = Integer.parseInt(scanner.nextLine());
-                setting[1] = Integer.parseInt(scanner.nextLine());
-                setting[2] = Integer.parseInt(scanner.nextLine());
-            }
-            scanner.close();
-        }
-        catch (FileNotFoundException e)
-        {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * This function uses a scanner to save the game settings in the
-     * yahtzeeConfig.txt
-     *
-     * @param setting tracks the user inputted settings
-     */
-    static void writeFile(int[] setting)
-    {
-        try
-        {
-            FileWriter writer = new FileWriter("yahtzeeConfig.txt");
-            writer.write(setting[0] + "\n" + setting[1] + "\n" + setting[2]);
-            writer.close();
-        }
-        catch (IOException e)
-        {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
         }
     }
 }
@@ -238,37 +150,128 @@ class scorecard extends yahtzee
      * Allows the user to choose which row in the scorecard the score will go into
      *
      * @param totalRolls the total rolls the user has
+     * @param hand[] uses the numbers genereated from each hand
      */
-    static void selectLine(int totalRolls, int[] hand)
-    {
-        //to keep track of which rows have been already used
-        boolean[] usedRow = new boolean[totalRolls];
-        for (int i = 0; i < totalRolls; i++)
-            usedRow[i] = false;
-        
-        System.out.print("Select row ");
+    static void selectLine(int totalRolls, int[] hand, int sides, int[] usedRow, int numSides, int totalScore)
+    {   
+        int[] line = new int[numSides + 7]; 
+        for (int i = 0; i < numSides + 7; i++)
+            line[i] = 0;
 
-        for (int j = 0; j < usedRow.length; j++)
+        for (int dieValue = 1; dieValue <= numSides; dieValue++)
         {
-            while (usedRow[j] = false)
+            //upper card
+            int currentCount = 0;
+            for (int diePosition = 0; diePosition < sides - 1 && diePosition < hand.length; diePosition++)
             {
-                int fix = j + 1;
-                System.out.print(fix + ", ");
+                if (hand[diePosition] == dieValue)
+                    currentCount++;
+            }
+            if (usedRow[dieValue - 1] == 0)
+            {
+            System.out.print("Score " + dieValue * currentCount + " on the ");
+            System.out.print(dieValue + " line" + "\n");
             }
         }
-        System.out.print("to save score: ");
-
-        int tmp = consoleInput.nextInt();
-        usedRow[tmp - 1] = true;
+        int j = numSides + 1;
+            //lower card
+            if (usedRow[j] == 0)
+            {
+                if (maxOfAKindFound(hand) >= 3)
+                {
+                    System.out.print("Score " + totalAllDice(hand, numSides) + " on the 3 of a Kind line " + j + "\n");
+                    line[j] = totalAllDice(hand, numSides);
+                }
+                else
+                    System.out.print("Score 0 on the 3 of a Kind line " + j + "\n");
+            }
+            if (usedRow[j + 1] == 0)
+            {
+                if (maxOfAKindFound(hand) >= 4)
+                {
+                    System.out.print("Score " + totalAllDice(hand, numSides) + " on the 4 of a Kind line " + (j + 1) + "\n");
+                    line[j] = totalAllDice(hand, numSides);
+                }
+                    else
+                    System.out.print("Score 0 on the 4 of a Kind line " + (j + 1) + "\n");
+            }
+            if (usedRow[j + 2] == 0)
+            {
+                if (fullHouseFound(hand, numSides))
+                {
+                    System.out.print("Score 25 on the Full House line " + (j + 2) + "\n");
+                    line[j + 2] = 25;
+                }    
+                else
+                    System.out.print("Score 0 on the Full House line " + (j + 2) + "\n");
+            }
+            if (usedRow[j + 3] == 0)
+            {
+                if (maxStraightFound(hand) >= 4)
+                {
+                    System.out.print("Score 30 on the Small Straight line " + (j + 3) + "\n");
+                    line[j + 3] = 30;
+                }
+                else
+                    System.out.print("Score 0 on the Small Straight line " + (j + 3) + "\n");
+            }
+            if (usedRow[j + 4] == 0)
+            {
+                if (maxStraightFound(hand) >= 5)
+                {
+                    System.out.print("Score 40 on the Large Straight line " + (j + 4) + "\n");
+                    line[j + 4] = 40;
+                }
+                else
+                    System.out.print("Score 0 on the Large Straight line " + (j + 4) + "\n");
+            }
+            if (usedRow[j + 5] == 0)
+            {
+                if (maxOfAKindFound(hand) >= 5)
+                {
+                    System.out.print("Score 50 on the Yahtzee line " + (j + 5) + "\n");
+                    line[j + 5] = 50;
+                    int bonusYahtzee = 0;
+                    bonusYahtzee = bonusYahtzee + 1;
+                }
+                else
+                    System.out.print("Score 0 on the Yahtzee line " + (j + 5) +"\n");
+            }
+        
+        System.out.print("Select line to save score: ");
+        
+        //sets user's choice to true in usedRow
+        int tmp = Integer.parseInt(consoleInput.nextLine());
+        usedRow[tmp - 1] = -1;
+        totalScore = totalScore + line[tmp - 1];
+        System.out.print("\n");
     }
+
     /**
      * Produces the outputs for the upper scorecard
      *
-     * @param hand[] uses the numbers generated for each hand
+     * @param usedRow tracks the rows and their values that have been used in the scorecard
      */
-    static void upperScorecard(int[] hand, int numberOfSides)
+    static int calculateBonus(int totalScore, int bonusYahtzee)
     {
-        for (int dieValue = 1; dieValue <= numberOfSides; dieValue++)
+        if (totalScore >= 63)
+            totalScore = totalScore + 35;
+        if (bonusYahtzee > 1)
+            totalScore = totalScore + ((bonusYahtzee - 1) * 100);
+
+        return totalScore;
+    }
+
+    /**
+     * Produces the outputs for the upper scorecard
+     *
+     * @param hand uses the numbers generated for each hand
+     * @param numberOfSides the number of sides on each dice
+     * @param usedRow tracks the rows and their values that have been used in the scorecard
+     */
+    static void upperScorecard(int[] hand, int numberOfSides, int[] usedRow, int rolls, int numSides)
+    {
+        for (int dieValue = 1; dieValue <= numSides; dieValue++)
         {
             int currentCount = 0;
             for (int diePosition = 0; diePosition < numberOfSides - 1 && diePosition < hand.length; diePosition++)
@@ -276,6 +279,7 @@ class scorecard extends yahtzee
                 if (hand[diePosition] == dieValue)
                     currentCount++;
             }
+        
             System.out.print("Score " + dieValue * currentCount + " on the ");
             System.out.print(dieValue + " line" + "\n");
         }
@@ -286,20 +290,14 @@ class scorecard extends yahtzee
      *
      * @param hand[] uses the numbers generated for each hand
      */
-    static void lowerScorecard(int[] hand, int setting)
+    static void lowerScorecard(int[] hand, int setting, int[] usedRow, int totalScore, int bonusYahtzee)
     {
         if (maxOfAKindFound(hand) >= 3)
-        {
-            System.out.print("Score " + totalAllDice(hand, setting) + " on the ");
-            System.out.print("3 of a Kind line \n");
-        }
+            System.out.print("Score " + totalAllDice(hand, setting) + " on the 3 of a Kind line \n");
         else
             System.out.print("Score 0 on the 3 of a Kind line \n");
         if (maxOfAKindFound(hand) >= 4)
-        {
-            System.out.print("Score " + totalAllDice(hand, setting) + " on the ");
-            System.out.print("4 of a Kind line \n");
-        }
+            System.out.print("Score " + totalAllDice(hand, setting) + " on the 4 of a Kind line \n");
         else
             System.out.print("Score 0 on the 4 of a Kind line \n");
         if (fullHouseFound(hand, setting))
@@ -318,6 +316,7 @@ class scorecard extends yahtzee
             System.out.print("Score 50 on the Yahtzee line \n");
         else
             System.out.print("Score 0 on the Yahtzee line \n");
+        System.out.print("Grand total: " + calculateBonus(totalScore, bonusYahtzee) + "\n");
     }
 
     /**
@@ -413,5 +412,108 @@ class scorecard extends yahtzee
             total += hand[diePosition];
         }
         return total;
+    }
+}
+
+class file extends yahtzee
+{
+    /**
+     * This function reads the input file and sets the game rules
+     *
+     * @param setting tracks the user inputted settings
+     */
+    static void readFile(int[] setting)
+    {
+        try
+        {
+            File inFile = new File("yahtzeeConfig.txt");
+            Scanner scanner = new Scanner(inFile);
+            while (scanner.hasNextLine())
+            {
+                setting[0] = Integer.parseInt(scanner.nextLine());
+                setting[1] = Integer.parseInt(scanner.nextLine());
+                setting[2] = Integer.parseInt(scanner.nextLine());
+            }
+            scanner.close();
+        }
+        catch (FileNotFoundException e)
+        {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * This function uses a scanner to save the game settings in the
+     * yahtzeeConfig.txt
+     *
+     * @param setting tracks the user inputted settings
+     */
+    static void writeFile(int[] setting)
+    {
+        try
+        {
+            FileWriter writer = new FileWriter("yahtzeeConfig.txt");
+            writer.write(setting[0] + "\n" + setting[1] + "\n" + setting[2]);
+            writer.close();
+        }
+        catch (IOException e)
+        {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
+}
+
+class dice extends yahtzee
+{
+    /*
+     * Simulates the rolling of a single die
+     *
+     * @param number the number of sides on a dic
+     * @return roll returns the number from 1 die roll
+     */
+    static int rollDie(int number)
+    {
+        Random rnd = new Random();
+        int roll = rnd.nextInt(number) + 1;
+        while (roll == 0)
+        {
+            roll = rnd.nextInt(number) + 1;
+        }
+        return roll;
+    }
+
+    /**
+     * This function allows the user tp use previous game settings or create their
+     * own
+     *
+     * @param setting tracks the user inputted settings
+     */
+    static void setUpDiceRolls(int[] setting)
+    {
+        //initialize
+        char changeDice = 'n';
+        System.out.print("You are playing with " + setting[1] + " " + setting[0] + "-sided dice\n");
+        System.out.print("You get " + setting[2] + " rolls per turn\n");
+        System.out.print("Enter 'y' if you would like to change the configuration: ");
+        changeDice = consoleInput.nextLine().charAt(0);
+
+        if (changeDice == 'y')
+        {
+            int tmp;
+            System.out.print("Enter the number of sides on each die: ");
+            tmp = Integer.parseInt(consoleInput.nextLine());
+            setting[0] = tmp;
+            System.out.print("Enter the number of dice in play: ");
+            tmp = Integer.parseInt(consoleInput.nextLine());
+            setting[1] = tmp;
+            System.out.print("Enter the number of rolls per hand: ");
+            tmp = Integer.parseInt(consoleInput.nextLine());
+            setting[2] = tmp;
+
+            //save settings for next game
+            file.writeFile(setting);
+        }
     }
 }
