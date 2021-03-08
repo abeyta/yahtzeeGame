@@ -53,12 +53,12 @@ public class yahtzee
      * Play function that gives outputs based on whether or not the user would like
      * to keep the dice
      *
-     * @param hand[] uses the numbers generated for each hand
+     * @param hand uses the numbers generated for each hand
      * @param playAgain user inputed char that determines if the program plays again
      * @param numberOfDice tracks the number of dice from the user
      * @param numberOfRoles tracks the number of roles per hand from the user
      * @param numberOfSides tracks the number of sides on a dice from the user
-     * @param hand[] uses the numbers genereated from each hand
+     * @param usedRow tracks which rows have already been used
      * @param totalScore tracks total score
      */
     static void play(char playAgain, int[] hand, int numberOfDice, int numberOfRolls, int numberOfSides, int[] usedRow, int totalScore)
@@ -115,7 +115,7 @@ public class yahtzee
                     } 
                 }
 
-                scorecard.selectLine(numberOfRolls, hand, numberOfSides, usedRow, numberOfSides, totalScore);
+                scorecard.selectLine(numberOfRolls, hand, usedRow, numberOfSides, totalScore);
                 turn++;
             }
 
@@ -132,7 +132,7 @@ public class yahtzee
             //upper scorecard
             scorecard.upperScorecard(hand, numberOfSides, usedRow, numberOfRolls, numberOfSides);
             //lower scorecard
-            scorecard.lowerScorecard(hand, numberOfSides, usedRow, totalScore, bonusYahtzee);
+            scorecard.lowerScorecard(hand, numberOfSides, totalScore, bonusYahtzee);
             System.out.print("Score " + scorecard.totalAllDice(hand, numberOfRolls) + " on the ");
             System.out.print("Chance line \n");
             System.out.print("\nEnter 'y' to play again: ");
@@ -151,8 +151,11 @@ class scorecard extends yahtzee
      *
      * @param totalRolls the total rolls the user has
      * @param hand[] uses the numbers genereated from each hand
+     * @param usedRow tracks the rows and their values that have been used in the scorecard
+     * @param numSides the number of sides on 1 dice
+     * @param totalScore the total score of the game so far
      */
-    static void selectLine(int totalRolls, int[] hand, int sides, int[] usedRow, int numSides, int totalScore)
+    static void selectLine(int totalRolls, int[] hand, int[] usedRow, int numSides, int totalScore)
     {   
         int[] line = new int[numSides + 7]; 
         for (int i = 0; i < numSides + 7; i++)
@@ -162,7 +165,7 @@ class scorecard extends yahtzee
         {
             //upper card
             int currentCount = 0;
-            for (int diePosition = 0; diePosition < sides - 1 && diePosition < hand.length; diePosition++)
+            for (int diePosition = 0; diePosition < numSides - 1 && diePosition < hand.length; diePosition++)
             {
                 if (hand[diePosition] == dieValue)
                     currentCount++;
@@ -251,8 +254,10 @@ class scorecard extends yahtzee
      * Produces the outputs for the upper scorecard
      *
      * @param usedRow tracks the rows and their values that have been used in the scorecard
+     * @param bonusYahtzee tracks the number of yahtzee per game
+     * @return the total score
      */
-    static int calculateBonus(int totalScore, int bonusYahtzee)
+   static int calculateBonus(int totalScore, int bonusYahtzee)
     {
         if (totalScore >= 63)
             totalScore = totalScore + 35;
@@ -268,6 +273,8 @@ class scorecard extends yahtzee
      * @param hand uses the numbers generated for each hand
      * @param numberOfSides the number of sides on each dice
      * @param usedRow tracks the rows and their values that have been used in the scorecard
+     * @param rolls tracks the number of rolls per game
+     * @param numSides tracks the number of sides per dice per game
      */
     static void upperScorecard(int[] hand, int numberOfSides, int[] usedRow, int rolls, int numSides)
     {
@@ -289,8 +296,10 @@ class scorecard extends yahtzee
      * Produces the outputs for the lower scorecard
      *
      * @param hand[] uses the numbers generated for each hand
+     * @param setting the number of dice rolls in one game
+     * @param bonusYahtzee tracks the number of yahtzees
      */
-    static void lowerScorecard(int[] hand, int setting, int[] usedRow, int totalScore, int bonusYahtzee)
+    static void lowerScorecard(int[] hand, int setting, int totalScore, int bonusYahtzee)
     {
         if (maxOfAKindFound(hand) >= 3)
             System.out.print("Score " + totalAllDice(hand, setting) + " on the 3 of a Kind line \n");
@@ -345,6 +354,7 @@ class scorecard extends yahtzee
      * Returns true if the hand is a full house or false if it does not
      *
      * @param hand[] uses the numbers generated for each hand
+     * @param numberOfSides the number of sides on each dice
      * @return foundFH true if a full hand is found
      */
 
@@ -402,6 +412,7 @@ class scorecard extends yahtzee
      * Returns the total value of all dice in a hand
      *
      * @param hand[] uses the numbers generated for each hand
+     * @param diceRolls the number of dice rolls in one game
      * @return total total of all 5 dice rolls
      */
     static int totalAllDice(int hand[], int diceRolls)
