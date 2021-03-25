@@ -10,16 +10,21 @@ import java.io.*;
 
 public class yahtzee
 {
-    static int numberOfSides;
-    static int numberOfDice;
-    static int numberOfRolls;
+    int numberOfSides;
+    int numberOfDice;
+    int numberOfRolls;
     static Scanner consoleInput = new Scanner(System.in); // creates a new scanner to allow input from console
 
     public static void main(String args[])
     {
-        char playAgain = 'y';
+        //create new objects
+        playGame playGame = new playGame();
+        dice dice = new dice();
         Random rnd = new Random();
+
+        char playAgain = 'y';
         rnd.setSeed(20);
+        file file = new file();
         int[] setting = new int[3];
         int totalScore = 0;
         //reads the file and sets the the appropriate settings from the previous game before other memory is allocated
@@ -33,17 +38,20 @@ public class yahtzee
         //allocates space for hand once the user has input the number of dice they want to use
         int[] hand = new int[setting[1]];
         //executes the main program loop
-        play(playAgain, hand, setting[1], setting[2], setting[0], usedRow, totalScore);
+        playGame.play(playAgain, hand, setting[1], setting[2], setting[0], usedRow, totalScore);
         consoleInput.close();
     }
+}
 
+class playGame extends yahtzee
+{
     /**
      * Sorts the array
      * 
      * @param array[] the array to be sorted
      * @param size the size of the array being sorted
      */
-    static void sortArray(int array[], int size)
+    void sortArray(int array[], int size)
     {
         Arrays.sort(array);
     }
@@ -61,8 +69,12 @@ public class yahtzee
      * @param usedRow tracks which rows have already been used
      * @param totalScore tracks total score
      */
-    static void play(char playAgain, int[] hand, int numberOfDice, int numberOfRolls, int numberOfSides, int[] usedRow, int totalScore)
+    void play(char playAgain, int[] hand, int numberOfDice, int numberOfRolls, int numberOfSides, int[] usedRow, int totalScore)
     {
+        //create new objects
+        scorecard scorecard = new scorecard();
+        dice dice = new dice();
+
         int bonusYahtzee = 0;
         while (playAgain == 'y')
         {
@@ -114,7 +126,7 @@ public class yahtzee
                         keep = consoleInput.nextLine();
                     } 
                 }
-
+                
                 scorecard.selectLine(numberOfRolls, hand, usedRow, numberOfSides, totalScore);
                 turn++;
             }
@@ -155,7 +167,7 @@ class scorecard extends yahtzee
      * @param numSides the number of sides on 1 dice
      * @param totalScore the total score of the game so far
      */
-    static void selectLine(int totalRolls, int[] hand, int[] usedRow, int numSides, int totalScore)
+    void selectLine(int totalRolls, int[] hand, int[] usedRow, int numSides, int totalScore)
     {   
         int[] line = new int[numSides + 7]; 
         for (int i = 0; i < numSides + 7; i++)
@@ -257,7 +269,7 @@ class scorecard extends yahtzee
      * @param bonusYahtzee tracks the number of yahtzee per game
      * @return the total score
      */
-   static int calculateBonus(int totalScore, int bonusYahtzee)
+   int calculateBonus(int totalScore, int bonusYahtzee)
     {
         if (totalScore >= 63)
             totalScore = totalScore + 35;
@@ -276,7 +288,7 @@ class scorecard extends yahtzee
      * @param rolls tracks the number of rolls per game
      * @param numSides tracks the number of sides per dice per game
      */
-    static void upperScorecard(int[] hand, int numberOfSides, int[] usedRow, int rolls, int numSides)
+    void upperScorecard(int[] hand, int numberOfSides, int[] usedRow, int rolls, int numSides)
     {
         for (int dieValue = 1; dieValue <= numSides; dieValue++)
         {
@@ -299,7 +311,7 @@ class scorecard extends yahtzee
      * @param setting the number of dice rolls in one game
      * @param bonusYahtzee tracks the number of yahtzees
      */
-    static void lowerScorecard(int[] hand, int setting, int totalScore, int bonusYahtzee)
+    void lowerScorecard(int[] hand, int setting, int totalScore, int bonusYahtzee)
     {
         if (maxOfAKindFound(hand) >= 3)
             System.out.print("Score " + totalAllDice(hand, setting) + " on the 3 of a Kind line \n");
@@ -334,7 +346,7 @@ class scorecard extends yahtzee
      * @param hand[] uses the numbers generated for each hand
      * @return maxLength maximum length of a straight found
      */
-    static int maxStraightFound(int hand[])
+    int maxStraightFound(int hand[])
     {
         int maxLength = 1;
         int curLength = 1;
@@ -358,7 +370,7 @@ class scorecard extends yahtzee
      * @return foundFH true if a full hand is found
      */
 
-    static boolean fullHouseFound(int hand[], int numberOfSides)
+    boolean fullHouseFound(int hand[], int numberOfSides)
     {
         boolean foundFH = false;
         boolean found3K = false;
@@ -390,7 +402,7 @@ class scorecard extends yahtzee
     * @param hand[] uses the numbers generated for each hand
     * @return maxCount the count of the die value occuring most in the hand
     */
-    static int maxOfAKindFound(int hand[])
+    int maxOfAKindFound(int hand[])
     {
         int maxCount = 0;
         int currentCount;
@@ -415,7 +427,7 @@ class scorecard extends yahtzee
      * @param diceRolls the number of dice rolls in one game
      * @return total total of all 5 dice rolls
      */
-    static int totalAllDice(int hand[], int diceRolls)
+    int totalAllDice(int hand[], int diceRolls)
     {
         int total = 0;
         for (int diePosition = 0; diePosition < diceRolls && diePosition < hand.length; diePosition++)
@@ -433,7 +445,7 @@ class file extends yahtzee
      *
      * @param setting tracks the user inputted settings
      */
-    static void readFile(int[] setting)
+    void readFile(int[] setting)
     {
         try
         {
@@ -460,7 +472,7 @@ class file extends yahtzee
      *
      * @param setting tracks the user inputted settings
      */
-    static void writeFile(int[] setting)
+    void writeFile(int[] setting)
     {
         try
         {
@@ -484,14 +496,10 @@ class dice extends yahtzee
      * @param number the number of sides on a dic
      * @return roll returns the number from 1 die roll
      */
-    static int rollDie(int number)
+    int rollDie(int number)
     {
         Random rnd = new Random();
         int roll = rnd.nextInt(number) + 1;
-        while (roll == 0)
-        {
-            roll = rnd.nextInt(number) + 1;
-        }
         return roll;
     }
 
@@ -501,8 +509,9 @@ class dice extends yahtzee
      *
      * @param setting tracks the user inputted settings
      */
-    static void setUpDiceRolls(int[] setting)
+    void setUpDiceRolls(int[] setting)
     {
+        file file = new file();
         //initialize
         char changeDice = 'n';
         System.out.print("You are playing with " + setting[1] + " " + setting[0] + "-sided dice\n");
@@ -528,3 +537,4 @@ class dice extends yahtzee
         }
     }
 }
+
