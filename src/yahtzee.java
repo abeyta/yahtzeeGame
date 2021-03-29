@@ -9,14 +9,7 @@ import java.util.*;
 import java.io.*;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import javax.swing.border.Border;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import javax.imageio.*;
 import java.io.IOException;
 
 public class yahtzee
@@ -24,6 +17,9 @@ public class yahtzee
     static int numberOfSides;
     int numberOfDice;
     int numberOfRolls;
+    static int[] hand;
+    static int[] setting;
+    static int[] usedRow;
     static GraphicsConfiguration gc;
     JFrame mainWindow;
     
@@ -33,27 +29,24 @@ public class yahtzee
     {
         //create new objects
         playGame playGame = new playGame();
-        GUI GUIClass = new GUI();
         dice dice = new dice();
         Random rnd = new Random();
-
-        GUIClass.openGUI();
-
         char playAgain = 'y';
+        
         rnd.setSeed(20);
         file file = new file();
-        int[] setting = new int[3];
+        setting = new int[3];
         int totalScore = 0;
         //reads the file and sets the the appropriate settings from the previous game before other memory is allocated
         file.readFile(setting);
         //to keep track of which rows have been already used
-        int[] usedRow = new int[setting[0] + 7];
+        usedRow = new int[setting[0] + 7];
         for (int i = 0; i < usedRow.length; i++)
             usedRow[i] = 0;
         //asks if the user wants different settings after each game
         dice.setUpDiceRolls(setting);
         //allocates space for hand once the user has input the number of dice they want to use
-        int[] hand = new int[setting[1]];
+        hand = new int[setting[1]];
         //executes the main program loop
         playGame.play(playAgain, hand, setting[1], setting[2], setting[0], usedRow, totalScore);
         numberOfSides = setting[0];
@@ -517,7 +510,7 @@ class dice extends yahtzee
     int rollDie(int number)
     {
         Random rnd = new Random();
-        int roll = rnd.nextInt(number) + 1;
+        int roll = rnd.nextInt(number - 1 + 1) + 1;
         return roll;
     }
 
@@ -553,5 +546,10 @@ class dice extends yahtzee
             //save settings for next game
             file.writeFile(setting);
         }
+    }
+
+    int getDiceRolled(int position)
+    {
+        return hand[position];
     }
 }

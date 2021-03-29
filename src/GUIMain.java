@@ -18,7 +18,7 @@ public class GUIMain extends yahtzee
 {
     static GraphicsConfiguration gc;
     ArrayList<ImageIcon> images;
-    JButton[] diceList;
+    static JButton[] diceList;
     ArrayList<JButton> chooseRow;
     static JFrame mainWindow;
     dice dClass = new dice();
@@ -32,8 +32,11 @@ public class GUIMain extends yahtzee
     static int myTurn = 1;
     static char playAgain = 'y';
     static String keep;
+    static int[] scorePerLine;
+    static int[] scoreLinesUsed;
     public static void main(String args[])
     {
+        scorePerLine = new int[settings[0] + 7];
         dice dice = new dice();
         GUI GUIClass = new GUI();
         int diceSelected = 0;
@@ -66,6 +69,7 @@ public class GUIMain extends yahtzee
 
             int turn = 1;
             myTurn = 1;
+        
 
             while (turn < settings[2] && keepAll != keep)
             {
@@ -85,20 +89,16 @@ public class GUIMain extends yahtzee
                 //if not the last roll of the hand prompt the user for dice to keep
                 if (turn < settings[2])
                 {
-                    System.out.print("enter dice to keep (y or n): ");
-                    keep = consoleInput.nextLine();
-                    if (keep.length() != settings[1])
-                    {
-                        System.out.print("enter the correct number of dice to keep (y or n): ");
-                        keep = consoleInput.nextLine();
-                    } 
+                    for (int i = 1; i < settings[1] + 1; i++)
+                        diceList[i].setEnabled(true);
                 }
                 
                 //scorecard.selectLine(settings[2], hand, usedRow, settings[0], totalScore);
+                GUIClass.turnCounter(turn);
                 turn++;
                 myTurn++;
-            }
-            
+                
+            }  
         }
     }
 }
@@ -106,7 +106,16 @@ public class GUIMain extends yahtzee
 class GUI extends GUIMain
 {
     //ArrayList<ImageIcon> images;
+    JFrame playGameAgain = new JFrame();
+    JButton[] scorecardArray;
 
+
+    /**
+     * opens the main window
+     * 
+     * @param diceSelected tracks the dice chosen to be kept
+     * @param turn tracks the current turn
+     */
     void createWindow(int diceSelected, int turn)
     {
         String keep = new String();
@@ -124,6 +133,11 @@ class GUI extends GUIMain
         mainWindow.setVisible(true);
     }
 
+    /**
+     * A panel to hold the turn counter
+     * 
+     * @param turn tracks the current turn 
+     */
     public JPanel turnCounter(int turn)
     {
         JLabel myLabel = new JLabel("Turn: " + turn);
@@ -133,9 +147,13 @@ class GUI extends GUIMain
         return myPanel;
     }
 
+    /**
+     * creates the window to allow the user to play again
+     *
+     */
     void playAgainWindow()
     {
-        JFrame playGameAgain = new JFrame();
+        
         JPanel start = new JPanel();
         JButton doNotPlayAgain = new JButton("I Do Not Want To Play Again");
         JButton initiateGame = new JButton("Click Me to Play Again");
@@ -168,6 +186,8 @@ class GUI extends GUIMain
     /**
     * This function displays the new dice images according to which dice the user rolled
     * 
+    * @param keep keeps track of the dice that were selected to be kept
+    * @param diceSelected tracks the position of the selected dice to keep
     */
     public JPanel handPanel(String keep, int diceSelected)
     {
@@ -186,36 +206,49 @@ class GUI extends GUIMain
             die.setPreferredSize(new Dimension(80, 80));
             diceList[i] = die;
             handP.add(diceList[i]); 
-            greenDie(diceList[i], keep, diceSelected);
+            greenDie(diceList[i], diceSelected);
+            die.setEnabled(false);
         }
         handP.add(doneChoosing);
         return handP;
     }
 
-
+    /**
+     * updates the image of a die
+     * 
+     * @param dieNumber tracks which die you are updating
+     */
     void updateDiceImages(int dieNumber)
     {
         diceList[dieNumber].setIcon(getDieImage(hand[dieNumber]));
     }
 
-    void greenDie(JButton clickedDice, String keep, int diceSelected)
+    /**
+     * creates a green border around dice that are kept
+     * 
+     * @param clickedDice the button that was clicked
+     * @param diceSelected tracks the position of the selected dice to keep
+     */
+    void greenDie(JButton clickedDice, int diceSelected)
     {
         clickedDice.addActionListener(
         new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                String keep1 = new String();
                 System.out.println("Dice hidden");
                 Border greenline = BorderFactory.createLineBorder(Color.green);
                 clickedDice.setBorder(greenline);
-                //keep1 = keep.substring(0, diceSelected) + 'y' + keep.substring(diceSelected + 1);
+                clickedDice.setEnabled(false);
             }
         });
     }
 
-
-
+    /**
+     * hides the button that was clicked
+     * 
+     * @param clickedDice the button that was clicked
+     */
     void hideButton(JButton clickedDice)
     {
         clickedDice.addActionListener(
@@ -240,7 +273,7 @@ class GUI extends GUIMain
         scorecardP.setLayout(new BoxLayout(scorecardP, BoxLayout.Y_AXIS));
         //JButton showScorecard = new JButton("Show Scorecard");
         JLabel scorecardTitle = new JLabel("Scorecard");
-        JButton[] scorecardArray = new JButton[settings[0] + 7];
+        scorecardArray = new JButton[settings[0] + 7];
         scorecardArray[0] = null;
         scorecardP.setPreferredSize(new Dimension(600, 400));
         String[] name = new String[] {"3 of a Kind", "4 of a Kind", "Full House", "Small Straight", "Large Straight", "Yahtzee"};
@@ -262,16 +295,14 @@ class GUI extends GUIMain
         //add lower scorecard to score
         for (int i = settings[0] + 1; i < settings[0] + 7; i++)
         {
-            for (int j = 0; j < 6; j++)
-            {
-                int score = 0; //cClass.getScore(i);
-                JButton line = new JButton("Score " + score + " on the " + name[j] + " line");
-                scorecardArray[i] = line;
-                line.setPreferredSize(new Dimension(100, 400));
-                //hideButton(scorecardArray[i]);
-                scorecardP.add(scorecardArray[i]);
-                lockScorecard(scorecardArray[i]);
-            }
+            int score = 0; //cClass.getScore(i);
+            JButton line = new JButton("Score" + score + "on the " + i + "of a kind line");
+            scorecardArray[i] = line;
+            line.setPreferredSize(new Dimension(100, 400));
+
+            //hideButton(scorecardArray[i]);
+            scorecardP.add(scorecardArray[i]);
+            lockScorecard(scorecardArray[i]);
         }
 
         JLabel totalScore = new JLabel("Total Score: ");
@@ -281,6 +312,11 @@ class GUI extends GUIMain
         return scorecardP;
     }
 
+    /**
+     * locks the scorecard after each button is clicked
+     * 
+     * @param clickedDice the button that was clicked
+     */
     void lockScorecard(JButton clickedDice)
     {
         clickedDice.addActionListener(
@@ -297,6 +333,10 @@ class GUI extends GUIMain
         });
     }
 
+    /**
+     * a JPanel for the roll die button
+     * 
+     */
     public JPanel rollDieButton()
     {
         JPanel rollDieB = new JPanel();
@@ -308,13 +348,6 @@ class GUI extends GUIMain
             {
                 dice dice = new dice();
                 System.out.println("Roll button pressed");
-                /*for (int dieNumber = 0; dieNumber < settings[1] - 1; dieNumber++)
-                {
-                    if (dieNumber > 0 && dieNumber < keep.length() && keep.charAt(dieNumber) != 'y')
-                        hand[dieNumber] = dice.rollDie(settings[0]);
-                }*/
-                for (int i = 0; i < hand.length; i++)
-                    System.out.print(hand[i] + " ");
             }
         });
         rollDieB.add(rollB);
@@ -416,6 +449,10 @@ class GUI extends GUIMain
         inputSetting.add(options);
     }
 
+    /**
+     * loads the images from the file folder
+     * 
+     */
     void loadImages() {
         BufferedImage currPicture;
         images.add(null);
@@ -453,6 +490,11 @@ class GUI extends GUIMain
         }
     }
 
+    /**
+     * gets the image for a particular die value
+     * 
+     * @param dieValue the value of the die rolled
+     */
     public ImageIcon getDieImage(int dieValue) {
         return images.get(dieValue);
     }
