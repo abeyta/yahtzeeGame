@@ -153,7 +153,7 @@ class playGame extends yahtzee
             System.out.print("\n");
 
             //upper scorecard
-            scorecard.upperScorecard(hand, numberOfSides, usedRow, numberOfRolls, numberOfSides);
+            scorecard.upperScorecard(hand, numberOfSides, numberOfSides);
             //lower scorecard
             scorecard.lowerScorecard(hand, numberOfSides, totalScore, bonusYahtzee);
             System.out.print("Score " + scorecard.totalAllDice(hand, numberOfRolls) + " on the ");
@@ -203,7 +203,7 @@ class scorecard extends yahtzee
             //lower card
             if (usedRow[j] == 0)
             {
-                if (maxOfAKindFound(hand) >= 3)
+                if (maxOfAKindFound(hand, numSides) >= 3)
                 {
                     System.out.print("Score " + totalAllDice(hand, numSides) + " on the 3 of a Kind line " + j + "\n");
                     line[j] = totalAllDice(hand, numSides);
@@ -213,7 +213,7 @@ class scorecard extends yahtzee
             }
             if (usedRow[j + 1] == 0)
             {
-                if (maxOfAKindFound(hand) >= 4)
+                if (maxOfAKindFound(hand, numSides) >= 4)
                 {
                     System.out.print("Score " + totalAllDice(hand, numSides) + " on the 4 of a Kind line " + (j + 1) + "\n");
                     line[j] = totalAllDice(hand, numSides);
@@ -253,7 +253,7 @@ class scorecard extends yahtzee
             }
             if (usedRow[j + 5] == 0)
             {
-                if (maxOfAKindFound(hand) >= 5)
+                if (maxOfAKindFound(hand, numSides) >= 5)
                 {
                     System.out.print("Score 50 on the Yahtzee line " + (j + 5) + "\n");
                     line[j + 5] = 50;
@@ -299,7 +299,7 @@ class scorecard extends yahtzee
      * @param rolls tracks the number of rolls per game
      * @param numSides tracks the number of sides per dice per game
      */
-    void upperScorecard(int[] hand, int numberOfSides, int[] usedRow, int rolls, int numSides)
+    void upperScorecard(int[] hand, int numberOfSides, int numSides)
     {
         for (int dieValue = 1; dieValue <= numSides; dieValue++)
         {
@@ -316,6 +316,60 @@ class scorecard extends yahtzee
     }
 
     /**
+     * Produces the outputs for the upper scorecard
+     *
+     * @param hand uses the numbers generated for each hand
+     * @param numberOfSides the number of sides on each dice
+     * @param numberRolls tracks the number of rolls allowed per game
+     * @param totalScore passes in the total game score
+     * @param bonusYahtzee tracks the number of yahtzees per game to calculate bonus score
+     */
+    int[] getScorecardValue(int[] hand, int numberSides, int numberRolls, int totalScore, int bonusYahtzee, int[] scores)
+    {
+        //upper
+        for (int dieValue = 1; dieValue <= numberSides; dieValue++)
+        {
+            int currentCount = 0;
+            for (int diePosition = 1; diePosition < numberSides && diePosition < hand.length; diePosition++)
+            {
+                if (hand[diePosition] == dieValue)
+                    currentCount++;
+            }
+            scores[dieValue] = dieValue * currentCount;
+        }
+        //lower
+        int startOfLower = numberSides + 1;
+        if (maxOfAKindFound(hand, numberSides) >= 3)
+            scores[startOfLower] = totalAllDice(hand, numberRolls);
+        else
+            scores[startOfLower] = 0;
+        if (maxOfAKindFound(hand, numberSides) >= 4)
+            scores[startOfLower + 1] = totalAllDice(hand, numberRolls);
+        else
+            scores[startOfLower + 1] = 0;
+        if (fullHouseFound(hand, numberRolls))
+            scores[startOfLower + 2] = 25;
+        else
+            scores[startOfLower + 2] = 0;
+        if (maxStraightFound(hand) >= 4)
+            scores[startOfLower + 3] = 30;
+        else
+            scores[startOfLower + 3] = 0;
+        if (maxStraightFound(hand) >= 5)
+            scores[startOfLower + 4] = 40;
+        else
+            scores[startOfLower + 4] = 0;
+        if (maxOfAKindFound(hand, numberSides) >= 5)
+        {
+            scores[startOfLower + 5] = 50;
+            bonusYahtzee++;
+        }
+        else
+            scores[startOfLower + 5] = 0;
+        return scores;
+    }
+
+    /**
      * Produces the outputs for the lower scorecard
      *
      * @param hand[] uses the numbers generated for each hand
@@ -324,11 +378,11 @@ class scorecard extends yahtzee
      */
     void lowerScorecard(int[] hand, int setting, int totalScore, int bonusYahtzee)
     {
-        if (maxOfAKindFound(hand) >= 3)
+        if (maxOfAKindFound(hand, numberOfSides) >= 3)
             System.out.print("Score " + totalAllDice(hand, setting) + " on the 3 of a Kind line \n");
         else
             System.out.print("Score 0 on the 3 of a Kind line \n");
-        if (maxOfAKindFound(hand) >= 4)
+        if (maxOfAKindFound(hand, numberOfSides) >= 4)
             System.out.print("Score " + totalAllDice(hand, setting) + " on the 4 of a Kind line \n");
         else
             System.out.print("Score 0 on the 4 of a Kind line \n");
@@ -344,7 +398,7 @@ class scorecard extends yahtzee
             System.out.print("Score 40 on the Large Straight line \n");
         else
             System.out.print("Score 0 on the Large Straight line \n");
-        if (maxOfAKindFound(hand) >= 5)
+        if (maxOfAKindFound(hand, numberOfSides) >= 5)
             System.out.print("Score 50 on the Yahtzee line \n");
         else
             System.out.print("Score 0 on the Yahtzee line \n");
@@ -363,9 +417,9 @@ class scorecard extends yahtzee
         int curLength = 1;
         for (int counter = 0; counter < 4; counter++)
         {
-            if (counter + 1<hand.length && hand[counter] + 1 == hand[counter + 1]) // jump of 1, check index of bound
+            if (counter + 1 < hand.length && hand[counter] + 1 == hand[counter + 1]) // jump of 1, check index of bound
                 curLength++;
-            else if (counter + 1<hand.length && hand[counter] + 1 < hand[counter + 1]) // jump of >= 2
+            else if (counter + 1 < hand.length && hand[counter] + 1 < hand[counter + 1]) // jump of >= 2
                 curLength = 1;
             if (curLength > maxLength)
                 maxLength = curLength;
@@ -413,14 +467,14 @@ class scorecard extends yahtzee
     * @param hand[] uses the numbers generated for each hand
     * @return maxCount the count of the die value occuring most in the hand
     */
-    int maxOfAKindFound(int hand[])
+    int maxOfAKindFound(int hand[], int sides)
     {
         int maxCount = 0;
         int currentCount;
-        for (int dieValue = 1; dieValue <= numberOfSides; dieValue++)
+        for (int dieValue = 1; dieValue <= sides; dieValue++)
         {
                 currentCount = 0;
-                for (int diePosition = 0; diePosition < 5; diePosition++)
+                for (int diePosition = 1; diePosition < hand.length; diePosition++)
                 {
                     if (hand[diePosition] == dieValue)
                         currentCount++;
@@ -441,7 +495,7 @@ class scorecard extends yahtzee
     int totalAllDice(int hand[], int diceRolls)
     {
         int total = 0;
-        for (int diePosition = 0; diePosition < diceRolls && diePosition < hand.length; diePosition++)
+        for (int diePosition = 1; diePosition < hand.length; diePosition++)
         {
             total += hand[diePosition];
         }
