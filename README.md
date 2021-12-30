@@ -35,3 +35,4 @@ This document should be written in a narrative style and should include:
 ### IMPORTANT:
 
 This is an individual assignment.  Everything you turn in should be the result of keystrokes done by you. You should not consult nor use any existing classes related to Yahtzee or dice. You should not share your code nor look at the code of your classmates. It is ok to have generalized discussions about java and to have high-level design discussions about the classes, attributes, and methods necessary for the solution.
+# yahtzeeGame
